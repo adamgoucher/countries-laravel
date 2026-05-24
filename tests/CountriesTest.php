@@ -88,7 +88,7 @@ class CountriesTest extends TestCase
             }, 0);
         });
 
-        $results = coollect($results)->sort();
+        $results = collect($results)->sort();
 
         $this->assertEquals($results->toArray(), [
             'taxes' => 33,
