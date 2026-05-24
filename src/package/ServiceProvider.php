@@ -2,6 +2,7 @@
 
 namespace PragmaRX\CountriesLaravel\Package;
 
+use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider as IlluminateServiceProvider;
@@ -13,66 +14,37 @@ use PragmaRX\Countries\Package\Services\Helper;
 use PragmaRX\Countries\Package\Services\Hydrator;
 use PragmaRX\CountriesLaravel\Package\Console\Commands\Update;
 use PragmaRX\CountriesLaravel\Package\Facade as CountriesFacade;
+use PragmaRX\CountriesLaravel\Package\Http\Controllers\Flag;
 
-class ServiceProvider extends IlluminateServiceProvider
+class ServiceProvider extends IlluminateServiceProvider implements DeferrableProvider
 {
-    /**
-     * The application instance.
-     *
-     * @var \Illuminate\Foundation\Application
-     */
-    protected $app;
-
-    protected $defer = true;
-
-    /**
-     * Configure package paths.
-     */
-    protected function configurePaths()
+    protected function configurePaths(): void
     {
         $this->publishes([
             $this->getPackageConfigFile() => config_path('countries.php'),
         ], 'config');
     }
 
-    /**
-     * Get the package config file path.
-     *
-     * @return string
-     */
-    protected function getPackageConfigFile()
+    protected function getPackageConfigFile(): string
     {
         return __DIR__.'/../config/countries.php';
     }
 
-    /**
-     * Merge configuration.
-     */
-    protected function mergeConfig()
+    protected function mergeConfig(): void
     {
         $this->mergeConfigFrom(
             $this->getPackageConfigFile(), 'countries'
         );
     }
 
-    /**
-     * Bootstrap any application services.
-     *
-     * @return void
-     */
-    public function boot()
+    public function boot(): void
     {
         if (config('countries.validation.enabled')) {
             $this->addValidators();
         }
     }
 
-    /**
-     * Register any application services.
-     *
-     * @return void
-     */
-    public function register()
+    public function register(): void
     {
         $this->configurePaths();
 
@@ -87,32 +59,16 @@ class ServiceProvider extends IlluminateServiceProvider
         }
     }
 
-    /**
-     * Register routes.
-     */
-    protected function registerRoutes()
+    protected function registerRoutes(): void
     {
-        Route::get(
-            '/pragmarx/countries/flag/file/{cca3}.svg',
-            [
-                'name' => 'pragmarx.countries.flag.file',
-                'uses' => '\PragmaRX\CountriesLaravel\Package\Http\Controllers\Flag@file',
-            ]
-        );
+        Route::get('/pragmarx/countries/flag/file/{cca3}.svg', [Flag::class, 'file'])
+            ->name('pragmarx.countries.flag.file');
 
-        Route::get(
-            '/pragmarx/countries/flag/download/{cca3}.svg',
-            [
-                'name' => 'pragmarx.countries.flag.download',
-                'uses' => '\PragmaRX\CountriesLaravel\Package\Http\Controllers\Flag@download',
-            ]
-        );
+        Route::get('/pragmarx/countries/flag/download/{cca3}.svg', [Flag::class, 'download'])
+            ->name('pragmarx.countries.flag.download');
     }
 
-    /**
-     * Register the service.
-     */
-    protected function registerService()
+    protected function registerService(): void
     {
         $this->app->singleton('pragmarx.countries', function () {
             $hydrator = new Hydrator($config = new Config(config()));
@@ -129,10 +85,7 @@ class ServiceProvider extends IlluminateServiceProvider
         });
     }
 
-    /**
-     * Add validators.
-     */
-    protected function addValidators()
+    protected function addValidators(): void
     {
         foreach (config('countries.validation.rules') as $ruleName => $countryAttribute) {
             if (is_int($ruleName)) {
@@ -145,10 +98,7 @@ class ServiceProvider extends IlluminateServiceProvider
         }
     }
 
-    /**
-     * Register update command.
-     */
-    protected function registerUpdateCommand()
+    protected function registerUpdateCommand(): void
     {
         $this->app->singleton($command = 'countries.update.command', function () {
             return new Update();
@@ -157,12 +107,7 @@ class ServiceProvider extends IlluminateServiceProvider
         $this->commands($command);
     }
 
-    /**
-     * Get the services provided by the provider.
-     *
-     * @return array
-     */
-    public function provides()
+    public function provides(): array
     {
         return [
             'pragmarx.countries',
