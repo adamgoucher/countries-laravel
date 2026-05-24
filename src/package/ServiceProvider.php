@@ -73,7 +73,7 @@ class ServiceProvider extends IlluminateServiceProvider implements DeferrablePro
         $this->app->singleton('pragmarx.countries', function () {
             $hydrator = new Hydrator($config = new Config(config()));
 
-            $cache = new Cache($config, app(config('countries.cache.service')));
+            $cache = new Cache($config);
 
             $helper = new Helper($config);
 
